@@ -114,7 +114,15 @@ export const ReceptionistTodayBookingsScreen = ({ navigation }: any) => {
               />
               <Card.Content>
                 <View style={styles.badgeRow}>
-                  <Chip icon="account-tie" compact style={{ marginRight: 8 }}>
+                  <Chip
+                    icon="clock-outline"
+                    compact
+                    style={{ backgroundColor: theme.colors.secondaryContainer }}
+                  >
+                    {item.bookingDate || 'Today'} • {item.timeSlot}
+                  </Chip>
+
+                  <Chip icon="account-tie" compact>
                     Stylist: {item.stylistName}
                   </Chip>
 
@@ -205,6 +213,9 @@ const styles = StyleSheet.create({
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
   },
   cardActions: {
     paddingHorizontal: 16,

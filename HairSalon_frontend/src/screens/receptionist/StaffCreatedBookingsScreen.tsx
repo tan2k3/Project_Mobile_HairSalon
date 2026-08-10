@@ -68,9 +68,16 @@ export const StaffCreatedBookingsScreen = ({ navigation }: any) => {
               <Card.Content>
                 <View style={styles.tagRow}>
                   <Chip
+                    icon="clock-outline"
+                    compact
+                    style={{ backgroundColor: theme.colors.secondaryContainer }}
+                  >
+                    {item.bookingDate} • {item.timeSlot}
+                  </Chip>
+
+                  <Chip
                     icon={item.creationType === 'Walk-in' ? 'walk' : 'phone'}
                     compact
-                    style={styles.tag}
                   >
                     {item.creationType || 'Walk-in'}
                   </Chip>
@@ -84,7 +91,7 @@ export const StaffCreatedBookingsScreen = ({ navigation }: any) => {
                   Customer: {item.customerName} ({item.customerPhone})
                 </Text>
                 <Text variant="bodySmall" style={{ opacity: 0.7, marginTop: 4 }}>
-                  Time: {item.bookingDate} at {item.timeSlot} • Total: ${item.totalAmount}
+                  Total Amount: ${item.totalAmount}
                 </Text>
               </Card.Content>
             </Card>
@@ -109,6 +116,8 @@ const styles = StyleSheet.create({
   tagRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
     marginBottom: 8,
   },
   tag: {

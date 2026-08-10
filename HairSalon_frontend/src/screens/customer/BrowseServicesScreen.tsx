@@ -47,6 +47,9 @@ export const BrowseServicesScreen = ({ navigation }: any) => {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header elevated>
+        {navigation.canGoBack() && (
+          <Appbar.BackAction onPress={() => navigation.goBack()} />
+        )}
         <Appbar.Content title="Our Services" />
       </Appbar.Header>
 

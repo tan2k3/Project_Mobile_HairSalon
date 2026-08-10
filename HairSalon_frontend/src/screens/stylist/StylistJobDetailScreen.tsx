@@ -67,7 +67,7 @@ export const StylistJobDetailScreen = ({ navigation, route }: any) => {
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header elevated>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title={`Job Progress #${job.bookingCode}`} />
+        <Appbar.Content title={`Job Progress — ${job.customerName}`} />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.container}>
@@ -75,8 +75,11 @@ export const StylistJobDetailScreen = ({ navigation, route }: any) => {
           <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
             Customer: {job.customerName}
           </Text>
-          <Text variant="bodySmall" style={{ opacity: 0.7, marginTop: 4 }}>
-            Appointment: {job.bookingDate} at {job.timeSlot} • Phone: {job.customerPhone}
+          <Text variant="bodySmall" style={{ opacity: 0.8, marginTop: 4 }}>
+            📅 Appointment: {job.bookingDate} at {job.timeSlot}
+          </Text>
+          <Text variant="bodySmall" style={{ opacity: 0.8, marginTop: 2 }}>
+            📞 Phone: {job.customerPhone}
           </Text>
           <Chip
             icon={currentStatus === BookingStatus.CONFIRMED ? 'content-cut' : 'clock-outline'}

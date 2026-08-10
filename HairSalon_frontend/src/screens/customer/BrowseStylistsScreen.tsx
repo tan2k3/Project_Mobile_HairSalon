@@ -21,6 +21,9 @@ export const BrowseStylistsScreen = ({ navigation }: any) => {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header elevated>
+        {navigation.canGoBack() && (
+          <Appbar.BackAction onPress={() => navigation.goBack()} />
+        )}
         <Appbar.Content title="Our Master Stylists" />
       </Appbar.Header>
 

@@ -87,7 +87,7 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
             mode="outlined"
             icon="scissors-cutting"
             style={styles.quickBtn}
-            onPress={() => navigation.navigate('BrowseServices')}
+            onPress={() => navigation.navigate('ServicesTab')}
           >
             Services
           </Button>
@@ -95,13 +95,13 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
             mode="outlined"
             icon="account-group"
             style={styles.quickBtn}
-            onPress={() => navigation.navigate('BrowseStylists')}
+            onPress={() => navigation.navigate('StylistsTab')}
           >
             Stylists
           </Button>
           <Button
             mode="outlined"
-            icon="information"
+            icon="information-outline"
             style={styles.quickBtn}
             onPress={() => navigation.navigate('AboutSalon')}
           >

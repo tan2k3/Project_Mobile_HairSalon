@@ -88,7 +88,7 @@ export const StylistAssignedJobsScreen = ({ navigation }: any) => {
           >
             <Card.Title
               title={`${item.timeSlot} — ${item.customerName}`}
-              subtitle={`Code: ${item.bookingCode} • Phone: ${item.customerPhone}`}
+              subtitle={`Phone: ${item.customerPhone}`}
               right={() => (
                 <Chip compact style={{ marginRight: 16 }}>
                   {item.status.toUpperCase()}
@@ -96,6 +96,18 @@ export const StylistAssignedJobsScreen = ({ navigation }: any) => {
               )}
             />
             <Card.Content>
+              <Chip
+                icon="clock-outline"
+                compact
+                style={{
+                  alignSelf: 'flex-start',
+                  marginBottom: 8,
+                  backgroundColor: theme.colors.secondaryContainer,
+                }}
+              >
+                {item.bookingDate || 'Today'} • {item.timeSlot}
+              </Chip>
+
               <Text variant="titleMedium" style={styles.serviceName}>
                 Service: {item.services.map((s) => s.title).join(', ')}
               </Text>
