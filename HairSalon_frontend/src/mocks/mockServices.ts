@@ -77,7 +77,7 @@ export const MOCK_STYLISTS: Stylist[] = [
   {
     id: 'usr_stylist_2',
     fullName: 'Sophia Martinez',
-    specialty: 'Coloring & Perming Expert',
+    specialty: 'Coloring & Perming',
     rating: 4.8,
     experienceYears: 4,
     avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=300',

@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   Chip,
+  Icon,
   Text,
   useTheme,
 } from 'react-native-paper';
@@ -20,6 +21,11 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
   const { data: services } = useQuery({
     queryKey: ['services'],
     queryFn: () => bookingService.getServices(),
+  });
+
+  const { data: stylists } = useQuery({
+    queryKey: ['stylists'],
+    queryFn: () => bookingService.getStylists(),
   });
 
   const categories = [
@@ -120,7 +126,7 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
           ))}
         </ScrollView>
 
-        {/* Promotional Carousel Showcase */}
+        {/* Featured Salon Services */}
         <Text variant="titleMedium" style={[styles.sectionHeader, { marginTop: 16 }]}>
           Featured Salon Services
         </Text>
@@ -144,6 +150,44 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
             </Card>
           ))}
         </ScrollView>
+
+        {/* Top Master Stylists */}
+        <Text variant="titleMedium" style={[styles.sectionHeader, { marginTop: 16 }]}>
+          Top Master Stylists
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.promoRow}>
+          {(stylists || []).map((st) => (
+            <Card
+              key={st.id}
+              mode="outlined"
+              style={styles.promoCard}
+              onPress={() => navigation.navigate('StylistProfileDetail', { stylist: st })}
+            >
+              <Card.Cover source={{ uri: st.avatarUrl }} style={styles.cardImage} />
+              <Card.Content style={{ padding: 12 }}>
+                <Text variant="titleSmall" numberOfLines={1} style={{ fontWeight: 'bold' }}>
+                  {st.fullName}
+                </Text>
+                <Chip
+                  icon="content-cut"
+                  compact
+                  style={{ marginVertical: 4, alignSelf: 'flex-start', maxWidth: '100%' }}
+                  ellipsizeMode="tail"
+                >
+                  <Text variant="labelMedium" numberOfLines={1} style={{ maxWidth: 110 }}>
+                    {st.specialty}
+                  </Text>
+                </Chip>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Icon source="star" size={14} color="#FFB300" />
+                  <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
+                    {st.rating} ({st.experienceYears} Yrs Exp)
+                  </Text>
+                </View>
+              </Card.Content>
+            </Card>
+          ))}
+        </ScrollView>
       </ScrollView>
     </View>
   );
@@ -152,6 +196,7 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
+    paddingBottom: 32,
   },
   heroCard: {
     backgroundColor: '#1E1B2E',
@@ -198,7 +243,7 @@ const styles = StyleSheet.create({
   },
   promoRow: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   promoCard: {
     width: 200,
