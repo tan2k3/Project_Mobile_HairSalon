@@ -5,7 +5,7 @@ export enum UserRole {
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  [UserRole.CUSTOMER]: 'Khách hàng',
-  [UserRole.RECEPTIONIST]: 'Tiếp tân',
-  [UserRole.STYLIST]: 'Thợ cắt tóc',
+  [UserRole.CUSTOMER]: 'Customer',
+  [UserRole.RECEPTIONIST]: 'Receptionist',
+  [UserRole.STYLIST]: 'Stylist',
 };

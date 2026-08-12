@@ -5,6 +5,7 @@ import {
   Avatar,
   Button,
   Chip,
+  Icon,
   Snackbar,
   Surface,
   Text,
@@ -151,6 +152,7 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
           {(services || []).map((srv) => (
             <Chip
               key={srv.id}
+              icon="content-cut"
               mode={selectedServiceId === srv.id ? 'flat' : 'outlined'}
               selected={selectedServiceId === srv.id}
               onPress={() => setSelectedServiceId(srv.id)}
@@ -169,6 +171,7 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
           {upcomingDates.map((d) => (
             <Chip
               key={d.value}
+              icon="calendar-today"
               mode={selectedDate === d.value ? 'flat' : 'outlined'}
               selected={selectedDate === d.value}
               onPress={() => setSelectedDate(d.value)}
@@ -215,6 +218,7 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
             return (
               <Chip
                 key={slot}
+                icon="clock-outline"
                 mode={selectedTimeSlot === slot ? 'flat' : 'outlined'}
                 selected={selectedTimeSlot === slot}
                 disabled={disabled}
@@ -254,9 +258,12 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
                 <Text variant="bodyMedium" style={{ fontWeight: 'bold', marginTop: 6 }}>
                   {st.fullName}
                 </Text>
-                <Text variant="bodySmall" style={{ opacity: 0.7 }}>
-                  ★ {st.rating}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 }}>
+                  <Icon source="star" size={14} color="#FFB300" />
+                  <Text variant="bodySmall" style={{ opacity: 0.8, color: '#FFB300', fontWeight: 'bold' }}>
+                    {st.rating}
+                  </Text>
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -269,6 +276,7 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
         <TextInput
           label="Special requests for your haircut"
           mode="outlined"
+          left={<TextInput.Icon icon="notebook-edit-outline" />}
           multiline
           numberOfLines={3}
           value={notes}

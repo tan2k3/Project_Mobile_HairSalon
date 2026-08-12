@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
-  Avatar,
   Button,
   HelperText,
-  IconButton,
   Snackbar,
   TextInput,
   useTheme,
@@ -90,24 +88,6 @@ export const UpdateProfileScreen = ({ navigation }: any) => {
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.avatarContainer}>
-          <Avatar.Image
-            size={100}
-            source={{
-              uri:
-                profile?.avatarUrl ||
-                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
-            }}
-          />
-          <IconButton
-            icon="camera-plus"
-            mode="contained-tonal"
-            size={20}
-            style={styles.editAvatarBtn}
-            onPress={() => {}}
-          />
-        </View>
-
         <Controller
           control={control}
           name="fullName"

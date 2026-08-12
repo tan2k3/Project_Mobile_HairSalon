@@ -21,7 +21,7 @@ const registerSchema = z
   .object({
     fullName: z.string().min(2, 'Full Name is required'),
     email: z.string().email('Invalid email address'),
-    phone: z.string().min(9, 'Phone number must be at least 9 digits'),
+    phone: z.string().min(10, 'Phone number must be at least 10 digits'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(6, 'Please confirm your password'),
     agreeTerms: z.literal(true, {

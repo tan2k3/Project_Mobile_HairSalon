@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { Appbar, Card, Chip, Text, useTheme } from 'react-native-paper';
+import { Appbar, Card, Chip, Icon, Text, useTheme } from 'react-native-paper';
 import { useQuery } from '@tanstack/react-query';
 import { bookingService } from '../../services/bookingService';
 import { LoadingOverlay } from '../../components/LoadingOverlay';
@@ -47,13 +47,16 @@ export const BrowseStylistsScreen = ({ navigation }: any) => {
                   {item.fullName}
                 </Text>
 
-                <Chip compact style={{ marginVertical: 6 }}>
+                <Chip icon="content-cut" compact style={{ marginVertical: 6 }}>
                   {item.specialty}
                 </Chip>
 
-                <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
-                  ★ {item.rating} ({item.experienceYears} Yrs Exp)
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Icon source="star" size={14} color="#FFB300" />
+                  <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
+                    {item.rating} ({item.experienceYears} Yrs Exp)
+                  </Text>
+                </View>
               </Card.Content>
             </Card>
           </View>

@@ -2,7 +2,6 @@ import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
-  Avatar,
   Button,
   Card,
   Chip,
@@ -52,14 +51,6 @@ export const ViewProfileScreen = ({ navigation }: any) => {
 
       <ScrollView contentContainerStyle={styles.container}>
         <Surface style={styles.headerSurface} elevation={2}>
-          <Avatar.Image
-            size={84}
-            source={{
-              uri:
-                activeProfile?.avatarUrl ||
-                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
-            }}
-          />
           <Text variant="headlineSmall" style={styles.name}>
             {activeProfile?.fullName || 'User Name'}
           </Text>
@@ -68,7 +59,7 @@ export const ViewProfileScreen = ({ navigation }: any) => {
             style={{ marginTop: 8 }}
             compact
           >
-            {activeProfile?.role ? ROLE_LABELS[activeProfile.role] : 'User'}
+            {activeProfile?.role ? ROLE_LABELS[activeProfile.role] : 'Customer'}
           </Chip>
         </Surface>
 

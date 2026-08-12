@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
-  Avatar,
   Button,
   Card,
   Chip,
@@ -46,16 +45,10 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
           icon="bell-outline"
           onPress={() => navigation.navigate('NotificationPanel')}
         />
-        <View style={{ paddingRight: 12 }}>
-          <Avatar.Image
-            size={36}
-            source={{
-              uri:
-                user?.avatarUrl ||
-                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
-            }}
-          />
-        </View>
+        <Appbar.Action
+          icon="information-outline"
+          onPress={() => navigation.navigate('AboutSalon')}
+        />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.container}>

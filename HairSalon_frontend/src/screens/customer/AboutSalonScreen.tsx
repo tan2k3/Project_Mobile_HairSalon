@@ -4,6 +4,7 @@ import {
   Appbar,
   Button,
   Card,
+  Icon,
   List,
   Surface,
   Text,
@@ -42,9 +43,12 @@ export const AboutSalonScreen = ({ navigation }: any) => {
 
         {/* Static Map Placeholder Container */}
         <Surface style={styles.mapContainer} elevation={2}>
-          <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
-            📍 Interactive Salon Map Location
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon source="map-marker-radius" size={22} color={theme.colors.primary} />
+            <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+              Interactive Salon Map Location
+            </Text>
+          </View>
           <Text variant="bodySmall" style={{ opacity: 0.7, marginTop: 4 }}>
             District 1 Headquarters • 123 Main Street, Ho Chi Minh City
           </Text>
