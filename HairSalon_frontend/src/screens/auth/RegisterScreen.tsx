@@ -3,12 +3,10 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
   Button,
-  Checkbox,
   HelperText,
   Snackbar,
   Text,
   TextInput,
-  TouchableRipple,
   useTheme,
 } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
@@ -24,9 +22,6 @@ const registerSchema = z
     phone: z.string().min(10, 'Phone number must be at least 10 digits'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(6, 'Please confirm your password'),
-    agreeTerms: z.literal(true, {
-      errorMap: () => ({ message: 'You must agree to Terms & Conditions' }),
-    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -51,7 +46,6 @@ export const RegisterScreen = ({ navigation }: any) => {
       phone: '',
       password: '',
       confirmPassword: '',
-      agreeTerms: true,
     },
   });
 
@@ -102,11 +96,12 @@ export const RegisterScreen = ({ navigation }: any) => {
               onChangeText={onChange}
               value={value}
               error={!!errors.fullName}
-              style={styles.input}
             />
           )}
         />
-        {errors.fullName && <HelperText type="error">{errors.fullName.message}</HelperText>}
+        {errors.fullName && (
+          <HelperText type="error">{errors.fullName.message}</HelperText>
+        )}
 
         <Controller
           control={control}
@@ -125,7 +120,9 @@ export const RegisterScreen = ({ navigation }: any) => {
             />
           )}
         />
-        {errors.email && <HelperText type="error">{errors.email.message}</HelperText>}
+        {errors.email && (
+          <HelperText type="error">{errors.email.message}</HelperText>
+        )}
 
         <Controller
           control={control}
@@ -144,7 +141,9 @@ export const RegisterScreen = ({ navigation }: any) => {
             />
           )}
         />
-        {errors.phone && <HelperText type="error">{errors.phone.message}</HelperText>}
+        {errors.phone && (
+          <HelperText type="error">{errors.phone.message}</HelperText>
+        )}
 
         <Controller
           control={control}
@@ -163,7 +162,9 @@ export const RegisterScreen = ({ navigation }: any) => {
             />
           )}
         />
-        {errors.password && <HelperText type="error">{errors.password.message}</HelperText>}
+        {errors.password && (
+          <HelperText type="error">{errors.password.message}</HelperText>
+        )}
 
         <Controller
           control={control}
@@ -184,22 +185,6 @@ export const RegisterScreen = ({ navigation }: any) => {
         />
         {errors.confirmPassword && (
           <HelperText type="error">{errors.confirmPassword.message}</HelperText>
-        )}
-
-        <Controller
-          control={control}
-          name="agreeTerms"
-          render={({ field: { onChange, value } }) => (
-            <TouchableRipple onPress={() => onChange(!value)} style={styles.checkboxRow}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Checkbox.Android status={value ? 'checked' : 'unchecked'} />
-                <Text variant="bodyMedium">I agree to Terms & Conditions</Text>
-              </View>
-            </TouchableRipple>
-          )}
-        />
-        {errors.agreeTerms && (
-          <HelperText type="error">{errors.agreeTerms.message}</HelperText>
         )}
 
         <Button
@@ -236,12 +221,8 @@ const styles = StyleSheet.create({
   input: {
     marginTop: 8,
   },
-  checkboxRow: {
-    marginVertical: 12,
-    paddingVertical: 4,
-  },
   submitBtn: {
-    marginTop: 16,
+    marginTop: 20,
     borderRadius: 8,
   },
 });

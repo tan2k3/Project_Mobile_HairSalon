@@ -25,6 +25,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { bookingService } from '../../services/bookingService';
 import { LoadingOverlay } from '../../components/LoadingOverlay';
 import { ServiceItem, Stylist } from '../../types/service';
+import { BookingStatus } from '../../constants/bookingStatus';
 
 const staffBookingSchema = z.object({
   customerName: z.string().min(2, 'Customer name is required'),
@@ -54,18 +55,18 @@ export const StaffBookingFormScreen = ({ navigation, route }: any) => {
     queryFn: () => bookingService.getStylists(),
   });
 
+  const { data: allBookings } = useQuery({
+    queryKey: ['myBookings'],
+    queryFn: () => bookingService.getMyBookings(),
+  });
+
   const upcomingDates = React.useMemo(() => {
     const datesList = [];
     const today = new Date();
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 2; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
-      const dayLabel =
-        i === 0
-          ? 'Today'
-          : i === 1
-          ? 'Tomorrow'
-          : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const dayLabel = i === 0 ? 'Today' : 'Tomorrow';
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
@@ -156,8 +157,20 @@ export const StaffBookingFormScreen = ({ navigation, route }: any) => {
 
   const chosenStylist: Stylist | undefined = (stylists || []).find((st) => st.id === selectedStylistId);
 
+  const isChosenStylistBusy = React.useMemo(() => {
+    if (!selectedStylistId || !selectedBookingDate || !selectedTimeSlot || !allBookings) return false;
+    return allBookings.some(
+      (b) =>
+        (b.status === BookingStatus.PENDING || b.status === BookingStatus.CONFIRMED) &&
+        (b.stylistId === selectedStylistId ||
+          b.stylistName?.toLowerCase()?.includes(selectedStylistId.toLowerCase()) ||
+          selectedStylistId.toLowerCase().includes(b.stylistName?.toLowerCase() || '')) &&
+        b.bookingDate === selectedBookingDate &&
+        b.timeSlot === selectedTimeSlot
+    );
+  }, [selectedStylistId, selectedBookingDate, selectedTimeSlot, allBookings]);
+
   const totalPrice = chosenServices.reduce((sum, s) => sum + s.price, 0);
-  const totalDuration = chosenServices.reduce((sum, s) => sum + (s.durationMinutes || 30), 0);
 
   const handleOpenServicesCatalog = () => {
     navigation.navigate('BrowseServices', {
@@ -171,6 +184,8 @@ export const StaffBookingFormScreen = ({ navigation, route }: any) => {
     navigation.navigate('BrowseStylists', {
       isSelectionMode: true,
       selectedStylistId,
+      selectedDate: selectedBookingDate,
+      selectedTimeSlot,
       returnScreen: 'StaffBookingForm',
     });
   };
@@ -298,14 +313,14 @@ export const StaffBookingFormScreen = ({ navigation, route }: any) => {
                       </Text>
                     </View>
                     <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                      ${srv.price} ({srv.durationMinutes}m)
+                      ${srv.price}
                     </Text>
                   </View>
                 ))}
 
                 <View style={styles.totalRow}>
                   <Text variant="labelSmall" style={{ opacity: 0.6 }}>
-                    Total ({chosenServices.length} items, {totalDuration} mins)
+                    Total ({chosenServices.length} item{chosenServices.length > 1 ? 's' : ''})
                   </Text>
                   <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
                     ${totalPrice}
@@ -335,7 +350,14 @@ export const StaffBookingFormScreen = ({ navigation, route }: any) => {
         )}
 
         {/* Assigned Stylist Box */}
-        <Card mode="outlined" style={styles.summaryBox} onPress={handleOpenStylistsCatalog}>
+        <Card
+          mode="outlined"
+          style={[
+            styles.summaryBox,
+            isChosenStylistBusy && { borderColor: '#D32F2F', backgroundColor: '#FFF8F8' },
+          ]}
+          onPress={handleOpenStylistsCatalog}
+        >
           <Card.Content>
             {!chosenStylist ? (
               <Text variant="bodyMedium" style={{ opacity: 0.6, fontStyle: 'italic' }}>
@@ -351,20 +373,30 @@ export const StaffBookingFormScreen = ({ navigation, route }: any) => {
                   <Chip icon="content-cut" compact style={{ marginVertical: 2, alignSelf: 'flex-start' }}>
                     {chosenStylist.specialty}
                   </Chip>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Icon source="star" size={14} color="#FFB300" />
-                    <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
-                      {chosenStylist.rating} ({chosenStylist.experienceYears} Yrs Exp)
-                    </Text>
-                  </View>
                 </View>
-                <Chip icon="check" compact style={{ backgroundColor: theme.colors.primaryContainer }}>
-                  Assigned
-                </Chip>
+                {isChosenStylistBusy ? (
+                  <Chip
+                    icon="clock-alert-outline"
+                    compact
+                    style={{ backgroundColor: '#FFEBEE' }}
+                    textStyle={{ color: '#D32F2F', fontWeight: 'bold', fontSize: 11 }}
+                  >
+                    Busy at this time
+                  </Chip>
+                ) : (
+                  <Chip icon="check" compact style={{ backgroundColor: theme.colors.primaryContainer }}>
+                    Assigned
+                  </Chip>
+                )}
               </View>
             )}
           </Card.Content>
         </Card>
+        {isChosenStylistBusy && (
+          <HelperText type="error" visible style={{ marginTop: -8 }}>
+            ⚠️ This stylist is busy at {selectedTimeSlot} on {selectedBookingDate}. Please choose another stylist or time slot.
+          </HelperText>
+        )}
 
         {/* Appointment Date */}
         <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -382,14 +414,20 @@ export const StaffBookingFormScreen = ({ navigation, route }: any) => {
               {d.label}
             </Chip>
           ))}
-          <Chip
-            icon="calendar"
-            mode="outlined"
-            onPress={() => setOpenDatePicker(true)}
-            style={{ marginRight: 8 }}
-          >
-            Custom Date
-          </Chip>
+          {(() => {
+            const isCustom = selectedBookingDate !== upcomingDates[0]?.value && selectedBookingDate !== upcomingDates[1]?.value;
+            return (
+              <Chip
+                icon="calendar"
+                mode={isCustom ? 'flat' : 'outlined'}
+                selected={isCustom}
+                onPress={() => setOpenDatePicker(true)}
+                style={{ marginRight: 8 }}
+              >
+                {isCustom ? `Date: ${selectedBookingDate}` : 'Custom Date'}
+              </Chip>
+            );
+          })()}
         </ScrollView>
 
         <DatePickerModal
@@ -460,11 +498,11 @@ export const StaffBookingFormScreen = ({ navigation, route }: any) => {
           icon="calendar-plus"
           onPress={handleSubmit(onSubmit)}
           loading={createMutation.isPending}
-          disabled={createMutation.isPending}
+          disabled={createMutation.isPending || isChosenStylistBusy}
           style={styles.submitBtn}
           contentStyle={{ paddingVertical: 6 }}
         >
-          Create Walk-in Booking (${totalPrice})
+          {isChosenStylistBusy ? 'Stylist Busy - Select Another' : `Create Walk-in Booking ($${totalPrice})`}
         </Button>
       </ScrollView>
 

@@ -33,9 +33,6 @@ export const StylistProfileDetailScreen = ({ navigation, route }: any) => {
             <Chip icon="briefcase" style={styles.chip}>
               {stylist.experienceYears} Yrs Exp
             </Chip>
-            <Chip icon="star" style={[styles.chip, { backgroundColor: '#FFF8E1' }]}>
-              {stylist.rating} Rating
-            </Chip>
           </View>
         </Surface>
 

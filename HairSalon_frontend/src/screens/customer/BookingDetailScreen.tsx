@@ -6,8 +6,10 @@ import {
   Button,
   Card,
   Chip,
+  Dialog,
   Icon,
   List,
+  Portal,
   Snackbar,
   Surface,
   Text,
@@ -26,6 +28,7 @@ export const BookingDetailScreen = ({ navigation, route }: any) => {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [showContactDialog, setShowContactDialog] = useState(false);
 
   const booking: Booking = route?.params?.booking || {
     id: 'bk_1',
@@ -72,7 +75,6 @@ export const BookingDetailScreen = ({ navigation, route }: any) => {
       <Appbar.Header elevated>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
         <Appbar.Content title="Appointment Details" />
-        <Appbar.Action icon="dots-horizontal" onPress={() => { }} />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.container}>
@@ -110,12 +112,28 @@ export const BookingDetailScreen = ({ navigation, route }: any) => {
               <Text variant="bodySmall" style={{ opacity: 0.7, marginVertical: 2 }}>
                 with {booking.stylistName}
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Icon source="star" size={14} color="#FFB300" />
-                <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
-                  4.9
+            </View>
+          </Card.Content>
+        </Card>
+
+        {/* Customer Contact Card */}
+        <Card mode="outlined" style={styles.card}>
+          <Card.Content>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text variant="labelSmall" style={{ opacity: 0.6 }}>Customer Contact Info</Text>
+                <Text variant="titleMedium" style={{ fontWeight: 'bold', marginTop: 2 }}>
+                  {booking.customerName || 'Alex Johnson'}
                 </Text>
               </View>
+              <Button
+                mode="outlined"
+                icon="account-box-outline"
+                onPress={() => setShowContactDialog(true)}
+                style={{ borderRadius: 20 }}
+              >
+                Contact Info
+              </Button>
             </View>
           </Card.Content>
         </Card>
@@ -195,7 +213,16 @@ export const BookingDetailScreen = ({ navigation, route }: any) => {
             mode="contained-tonal"
             icon="calendar-sync"
             style={{ flex: 1, borderRadius: 24 }}
-            onPress={() => navigation.navigate('BookAppointment')}
+            onPress={() =>
+              navigation.navigate('BookAppointment', {
+                rescheduleBookingId: booking.id,
+                initialServiceIds: booking.services.map((s) => s.id),
+                initialStylistId: booking.stylistId,
+                initialDate: booking.bookingDate,
+                initialTimeSlot: booking.timeSlot,
+                initialNotes: booking.notes,
+              })
+            }
           >
             Reschedule
           </Button>
@@ -212,6 +239,58 @@ export const BookingDetailScreen = ({ navigation, route }: any) => {
           </Button>
         </Surface>
       )}
+
+      <Portal>
+        <Dialog
+          visible={showContactDialog}
+          onDismiss={() => setShowContactDialog(false)}
+          style={{ borderRadius: 20 }}
+        >
+          <Dialog.Title style={{ fontWeight: 'bold' }}>Contact Information</Dialog.Title>
+          <Dialog.Content>
+            <View style={{ gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Icon source="account" size={20} color={theme.colors.primary} />
+                <View>
+                  <Text variant="labelSmall" style={{ opacity: 0.6 }}>Customer Name</Text>
+                  <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                    {booking.customerName || 'Alex Johnson'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Icon source="phone" size={20} color={theme.colors.primary} />
+                <View>
+                  <Text variant="labelSmall" style={{ opacity: 0.6 }}>Phone Number</Text>
+                  <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+                    {booking.customerPhone || '0901234567'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Icon source="store" size={20} color={theme.colors.primary} />
+                <View>
+                  <Text variant="labelSmall" style={{ opacity: 0.6 }}>Salon Support Hotline</Text>
+                  <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                    0901234567
+                  </Text>
+                </View>
+              </View>
+
+              <Text variant="bodySmall" style={{ opacity: 0.7, marginTop: 4, fontStyle: 'italic' }}>
+                Note: Use this contact information to communicate cancellation requests, time adjustments, or late arrival notifications.
+              </Text>
+            </View>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button mode="contained" onPress={() => setShowContactDialog(false)}>
+              Close
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 
       <Snackbar
         visible={!!snackbarMessage}

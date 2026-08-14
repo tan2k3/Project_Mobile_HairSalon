@@ -70,7 +70,7 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
         {/* Popular Services Section Header with See All */}
         <View style={styles.sectionHeaderRow}>
           <Text variant="titleMedium" style={styles.sectionHeader}>
-            Popular Services
+            Our Services
           </Text>
           <TouchableOpacity
             style={styles.seeAllBtn}
@@ -96,8 +96,8 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
                 <Text variant="titleSmall" numberOfLines={1} style={{ fontWeight: 'bold' }}>
                   {srv.title}
                 </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.primary, marginTop: 4 }}>
-                  ${srv.price} • {srv.durationMinutes} mins
+                <Text variant="bodySmall" style={{ color: theme.colors.primary, fontWeight: 'bold', marginTop: 4 }}>
+                  ${srv.price}
                 </Text>
               </Card.Content>
             </Card>
@@ -107,7 +107,7 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
         {/* Top Master Stylists Section Header with See All */}
         <View style={[styles.sectionHeaderRow, { marginTop: 16 }]}>
           <Text variant="titleMedium" style={styles.sectionHeader}>
-            Top Master Stylists
+            Our Stylists
           </Text>
           <TouchableOpacity
             style={styles.seeAllBtn}
@@ -143,12 +143,6 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
                     {st.specialty}
                   </Text>
                 </Chip>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Icon source="star" size={14} color="#FFB300" />
-                  <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
-                    {st.rating} ({st.experienceYears} Yrs Exp)
-                  </Text>
-                </View>
               </Card.Content>
             </Card>
           ))}

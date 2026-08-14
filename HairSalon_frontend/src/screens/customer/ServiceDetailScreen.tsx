@@ -61,9 +61,6 @@ export const ServiceDetailScreen = ({ navigation, route }: any) => {
           </View>
 
           <View style={styles.badgeRow}>
-            <Chip icon="clock" style={styles.chip}>
-              {service.durationMinutes} mins
-            </Chip>
             <Chip icon="tag" style={styles.chip}>
               {service.categoryName || 'General'}
             </Chip>

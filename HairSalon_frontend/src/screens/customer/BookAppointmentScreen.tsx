@@ -22,16 +22,18 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { DatePickerModal, en, registerTranslation } from 'react-native-paper-dates';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { bookingService } from '../../services/bookingService';
 import { LoadingOverlay } from '../../components/LoadingOverlay';
 import { useAppSelector } from '../../store';
 import { ServiceItem } from '../../types/service';
+import { BookingStatus } from '../../constants/bookingStatus';
 
 registerTranslation('en', en);
 
 export const BookAppointmentScreen = ({ navigation, route }: any) => {
   const theme = useTheme();
+  const queryClient = useQueryClient();
   const user = useAppSelector((state) => state.auth.user);
 
   const initialServiceId = route?.params?.selectedServiceId || 'srv_1';
@@ -40,15 +42,10 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
   const upcomingDates = React.useMemo(() => {
     const datesList = [];
     const today = new Date();
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 2; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
-      const dayLabel =
-        i === 0
-          ? 'Today'
-          : i === 1
-          ? 'Tomorrow'
-          : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const dayLabel = i === 0 ? 'Today' : 'Tomorrow';
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
@@ -68,6 +65,52 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
   const [notes, setNotes] = useState('');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [openDatePicker, setOpenDatePicker] = useState(false);
+
+  const { data: allBookings } = useQuery({
+    queryKey: ['myBookings'],
+    queryFn: () => bookingService.getMyBookings(),
+  });
+
+  const { data: services, isLoading: loadingServices } = useQuery({
+    queryKey: ['services'],
+    queryFn: () => bookingService.getServices(),
+  });
+
+  const { data: stylists, isLoading: loadingStylists } = useQuery({
+    queryKey: ['stylists'],
+    queryFn: () => bookingService.getStylists(),
+  });
+
+  const isStylistBusy = React.useCallback(
+    (stylistId: string, dateStr: string, slotStr: string): boolean => {
+      if (!allBookings) return false;
+      return allBookings.some(
+        (b) =>
+          b.id !== route?.params?.rescheduleBookingId &&
+          (b.status === BookingStatus.PENDING || b.status === BookingStatus.CONFIRMED) &&
+          (b.stylistId === stylistId ||
+            b.stylistName?.toLowerCase()?.includes(stylistId.toLowerCase()) ||
+            stylistId.toLowerCase().includes(b.stylistName?.toLowerCase() || '')) &&
+          b.bookingDate === dateStr &&
+          b.timeSlot === slotStr
+      );
+    },
+    [allBookings, route?.params?.rescheduleBookingId]
+  );
+
+  React.useEffect(() => {
+    if (stylists && stylists.length > 0) {
+      const currentIsBusy = isStylistBusy(selectedStylistId, selectedDate, selectedTimeSlot);
+      if (currentIsBusy) {
+        const availableStylist = stylists.find(
+          (st) => !isStylistBusy(st.id, selectedDate, selectedTimeSlot)
+        );
+        if (availableStylist) {
+          setSelectedStylistId(availableStylist.id);
+        }
+      }
+    }
+  }, [selectedDate, selectedTimeSlot, stylists, isStylistBusy, selectedStylistId]);
 
   const toggleServiceSelection = (serviceId: string) => {
     setSelectedServiceIds((prev) => {
@@ -101,16 +144,6 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
     const slotMinutes = hours * 60 + mins;
     return slotMinutes <= currentMinutes;
   }, []);
-
-  const { data: services, isLoading: loadingServices } = useQuery({
-    queryKey: ['services'],
-    queryFn: () => bookingService.getServices(),
-  });
-
-  const { data: stylists, isLoading: loadingStylists } = useQuery({
-    queryKey: ['stylists'],
-    queryFn: () => bookingService.getStylists(),
-  });
 
   const categories = [
     { id: 'all', name: 'All Services' },
@@ -159,9 +192,47 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
     return s.categoryId === selectedCategory;
   });
 
-  const createMutation = useMutation({
-    mutationFn: () =>
-      bookingService.createBooking({
+  const rescheduleBookingId = route?.params?.rescheduleBookingId;
+
+  React.useEffect(() => {
+    if (route?.params?.selectedServiceIds) {
+      setSelectedServiceIds(route.params.selectedServiceIds);
+    } else if (route?.params?.initialServiceIds) {
+      setSelectedServiceIds(route.params.initialServiceIds);
+    }
+
+    if (route?.params?.initialStylistId) {
+      setSelectedStylistId(route.params.initialStylistId);
+    }
+    if (route?.params?.initialDate) {
+      setSelectedDate(route.params.initialDate);
+    }
+    if (route?.params?.initialTimeSlot) {
+      setSelectedTimeSlot(route.params.initialTimeSlot);
+    }
+    if (route?.params?.initialNotes !== undefined) {
+      setNotes(route.params.initialNotes);
+    }
+  }, [
+    route?.params?.selectedServiceIds,
+    route?.params?.initialServiceIds,
+    route?.params?.initialStylistId,
+    route?.params?.initialDate,
+    route?.params?.initialTimeSlot,
+    route?.params?.initialNotes,
+  ]);
+
+  const handleOpenCatalog = () => {
+    navigation.navigate('BrowseServices', {
+      isSelectionMode: true,
+      selectedServiceIds,
+      returnScreen: 'BookAppointment',
+    });
+  };
+
+  const submitMutation = useMutation({
+    mutationFn: () => {
+      const dto = {
         serviceIds: selectedServiceIds,
         stylistId: selectedStylistId,
         bookingDate: selectedDate,
@@ -169,8 +240,16 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
         notes,
         customerName: user?.fullName || 'Alex Johnson',
         customerPhone: user?.phone || '0901234567',
-      }),
+      };
+      if (rescheduleBookingId) {
+        return bookingService.rescheduleBooking(rescheduleBookingId, dto);
+      }
+      return bookingService.createBooking(dto);
+    },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['todayBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['staffCreatedBookings'] });
       setSnackbarVisible(true);
       setTimeout(() => {
         navigation.navigate('CustomerMainTabs', { screen: 'MyBookingsTab' });
@@ -184,20 +263,6 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
     } else {
       navigation.goBack();
     }
-  };
-
-  React.useEffect(() => {
-    if (route?.params?.selectedServiceIds) {
-      setSelectedServiceIds(route.params.selectedServiceIds);
-    }
-  }, [route?.params?.selectedServiceIds]);
-
-  const handleOpenCatalog = () => {
-    navigation.navigate('BrowseServices', {
-      isSelectionMode: true,
-      selectedServiceIds,
-      returnScreen: 'BookAppointment',
-    });
   };
 
   if (loadingServices || loadingStylists) {
@@ -217,13 +282,15 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
         <Appbar.BackAction onPress={handleBack} />
         <Appbar.Content
           title={
-            currentStep === 1
+            rescheduleBookingId
+              ? 'Reschedule Appointment'
+              : currentStep === 1
               ? 'Select Services'
               : currentStep === 2
-              ? 'Choose Date & Time'
-              : currentStep === 3
-              ? 'Choose Specialist'
-              : 'Confirm Booking'
+                ? 'Choose Date & Time'
+                : currentStep === 3
+                  ? 'Choose Specialist'
+                  : 'Confirm Booking'
           }
         />
       </Appbar.Header>
@@ -291,7 +358,6 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
                 <Button
                   mode="text"
                   compact
-                  icon="scissors-cutting"
                   onPress={handleOpenCatalog}
                   style={{ marginLeft: 8 }}
                 >
@@ -349,7 +415,7 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
                       <Text variant="bodySmall" numberOfLines={2} style={{ opacity: 0.7, marginVertical: 4 }}>
                         {srv.description}
                       </Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 }}>
                         <Text variant="bodySmall" style={{ opacity: 0.8 }}>
                           ⏱️ {srv.durationMinutes} min
                         </Text>
@@ -403,14 +469,20 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
                   {d.label}
                 </Chip>
               ))}
-              <Chip
-                icon="calendar"
-                mode="outlined"
-                onPress={() => setOpenDatePicker(true)}
-                style={{ marginRight: 8 }}
-              >
-                Custom Date
-              </Chip>
+              {(() => {
+                const isCustom = selectedDate !== upcomingDates[0]?.value && selectedDate !== upcomingDates[1]?.value;
+                return (
+                  <Chip
+                    icon="calendar"
+                    mode={isCustom ? 'flat' : 'outlined'}
+                    selected={isCustom}
+                    onPress={() => setOpenDatePicker(true)}
+                    style={{ marginRight: 8 }}
+                  >
+                    {isCustom ? `Date: ${selectedDate}` : 'Custom Date'}
+                  </Chip>
+                );
+              })()}
             </ScrollView>
 
             <DatePickerModal
@@ -487,21 +559,26 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
 
             {(stylists || []).map((st) => {
               const isSelected = selectedStylistId === st.id;
+              const isBusy = isStylistBusy(st.id, selectedDate, selectedTimeSlot);
               return (
                 <TouchableOpacity
                   key={st.id}
                   activeOpacity={0.8}
-                  onPress={() => setSelectedStylistId(st.id)}
+                  disabled={isBusy}
+                  onPress={() => !isBusy && setSelectedStylistId(st.id)}
                   style={[
                     styles.wizardCard,
                     {
                       marginBottom: 8,
                       borderWidth: 1,
                       borderColor: isSelected ? theme.colors.primary : '#E0E0E0',
-                      backgroundColor: isSelected
+                      backgroundColor: isBusy
+                        ? '#F5F5F5'
+                        : isSelected
                         ? theme.colors.primaryContainer + '20'
                         : theme.colors.surface,
                       borderRadius: 16,
+                      opacity: isBusy ? 0.55 : 1,
                     },
                     isSelected && {
                       borderWidth: 2,
@@ -511,7 +588,13 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
                   <View style={{ flexDirection: 'row', padding: 10, alignItems: 'center' }}>
                     <Avatar.Image size={48} source={{ uri: st.avatarUrl }} />
                     <View style={{ flex: 1, marginLeft: 10 }}>
-                      <Text variant="titleSmall" style={{ fontWeight: 'bold' }}>
+                      <Text
+                        variant="titleSmall"
+                        style={{
+                          fontWeight: 'bold',
+                          color: isBusy ? '#757575' : theme.colors.onSurface,
+                        }}
+                      >
                         {st.fullName}
                       </Text>
                       <Chip
@@ -523,22 +606,27 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
                           {st.specialty}
                         </Text>
                       </Chip>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Icon source="star" size={14} color="#FFB300" />
-                        <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
-                          {st.rating} ({st.experienceYears} Yrs Exp)
-                        </Text>
-                      </View>
                     </View>
-                    <Chip
-                      compact
-                      mode={isSelected ? 'flat' : 'outlined'}
-                      selected={isSelected}
-                      showSelectedCheck={false}
-                      style={{ marginLeft: 8 }}
-                    >
-                      {isSelected ? 'Selected' : 'Select'}
-                    </Chip>
+                    {isBusy ? (
+                      <Chip
+                        compact
+                        icon="clock-alert-outline"
+                        style={{ backgroundColor: '#FFEBEE', marginLeft: 8 }}
+                        textStyle={{ color: '#D32F2F', fontWeight: 'bold', fontSize: 11 }}
+                      >
+                        Not Available
+                      </Chip>
+                    ) : (
+                      <Chip
+                        compact
+                        mode={isSelected ? 'flat' : 'outlined'}
+                        selected={isSelected}
+                        showSelectedCheck={false}
+                        style={{ marginLeft: 8 }}
+                      >
+                        {isSelected ? 'Selected' : 'Select'}
+                      </Chip>
+                    )}
                   </View>
                 </TouchableOpacity>
               );
@@ -629,12 +717,12 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
           <Button
             mode="contained"
             icon="check-circle"
-            loading={createMutation.isPending}
-            disabled={createMutation.isPending}
-            onPress={() => createMutation.mutate()}
+            loading={submitMutation.isPending}
+            disabled={submitMutation.isPending}
+            onPress={() => submitMutation.mutate()}
             style={styles.continueBtn}
           >
-            CONFIRM BOOKING
+            {rescheduleBookingId ? 'CONFIRM RESCHEDULE' : 'CONFIRM BOOKING'}
           </Button>
         )}
       </Surface>
@@ -644,7 +732,9 @@ export const BookAppointmentScreen = ({ navigation, route }: any) => {
         onDismiss={() => setSnackbarVisible(false)}
         duration={2000}
       >
-        Appointment booked successfully!
+        {rescheduleBookingId
+          ? 'Appointment rescheduled successfully!'
+          : 'Appointment booked successfully!'}
       </Snackbar>
     </View>
   );

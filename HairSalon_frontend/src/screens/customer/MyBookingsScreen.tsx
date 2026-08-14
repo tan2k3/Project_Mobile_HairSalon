@@ -41,12 +41,16 @@ export const MyBookingsScreen = ({ navigation }: any) => {
   );
 
   const historyBookings = allBookings.filter(
-    (b) => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.CANCELED
+    (b) =>
+      b.status === BookingStatus.COMPLETED ||
+      b.status === BookingStatus.CANCELED ||
+      b.status === BookingStatus.NO_SHOW
   );
 
   const filteredHistory = historyBookings.filter((b) => {
     if (historyFilter === 'completed') return b.status === BookingStatus.COMPLETED;
     if (historyFilter === 'canceled') return b.status === BookingStatus.CANCELED;
+    if (historyFilter === 'no_show') return b.status === BookingStatus.NO_SHOW;
     return true;
   });
 
@@ -266,7 +270,6 @@ export const MyBookingsScreen = ({ navigation }: any) => {
             )}
           </>
         ) : (
-          /* CONTENT FOR HISTORY TAB (IMAGE 2) */
           <>
             {/* Filter Chips */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
@@ -274,6 +277,7 @@ export const MyBookingsScreen = ({ navigation }: any) => {
                 { value: 'all', label: 'All' },
                 { value: 'completed', label: 'Completed' },
                 { value: 'canceled', label: 'Canceled' },
+                { value: 'no_show', label: 'No Show' },
               ].map((item) => (
                 <Chip
                   key={item.value}

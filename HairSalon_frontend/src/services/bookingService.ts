@@ -118,6 +118,36 @@ export const bookingService = {
     return response.data;
   },
 
+  async rescheduleBooking(bookingId: string, dto: CreateBookingDto): Promise<Booking> {
+    if (ENV.USE_MOCK_DATA) {
+      await delay(ENV.ARTIFICIAL_DELAY_MS);
+      const selectedServices = MOCK_SERVICES.filter((s) => dto.serviceIds.includes(s.id));
+      const stylist = MOCK_STYLISTS.find((st) => st.id === dto.stylistId) || MOCK_STYLISTS[0];
+      const totalAmount = selectedServices.reduce((sum, s) => sum + s.price, 0);
+
+      localBookingsList = localBookingsList.map((b) => {
+        if (b.id === bookingId) {
+          return {
+            ...b,
+            stylistId: stylist.id,
+            stylistName: stylist.fullName,
+            services: selectedServices.length > 0 ? selectedServices : b.services,
+            bookingDate: dto.bookingDate,
+            timeSlot: dto.timeSlot,
+            notes: dto.notes !== undefined ? dto.notes : b.notes,
+            totalAmount: totalAmount > 0 ? totalAmount : b.totalAmount,
+            status: BookingStatus.PENDING,
+          };
+        }
+        return b;
+      });
+      const updated = localBookingsList.find((b) => b.id === bookingId);
+      return updated!;
+    }
+    const response = await apiClient.put(`/bookings/${bookingId}`, dto);
+    return response.data;
+  },
+
   async updateBookingStatus(bookingId: string, status: BookingStatus): Promise<Booking> {
     if (ENV.USE_MOCK_DATA) {
       await delay(ENV.ARTIFICIAL_DELAY_MS);

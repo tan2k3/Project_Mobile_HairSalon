@@ -183,9 +183,6 @@ export const ExploreScreen = ({ navigation }: any) => {
                   </Text>
 
                   <View style={styles.metaRow}>
-                    <Chip icon="clock-outline" compact style={{ marginRight: 8 }}>
-                      {item.durationMinutes}m
-                    </Chip>
                     <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
                       ${item.price}
                     </Text>
@@ -246,13 +243,6 @@ export const ExploreScreen = ({ navigation }: any) => {
                       {item.specialty}
                     </Text>
                   </Chip>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Icon source="star" size={14} color="#FFB300" />
-                    <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
-                      {item.rating} ({item.experienceYears} Yrs Exp)
-                    </Text>
-                  </View>
                 </Card.Content>
               </Card>
             </View>

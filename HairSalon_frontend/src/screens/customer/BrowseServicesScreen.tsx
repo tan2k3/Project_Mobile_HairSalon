@@ -158,9 +158,6 @@ export const BrowseServicesScreen = ({ navigation, route }: any) => {
                   </Text>
 
                   <View style={styles.metaRow}>
-                    <Chip icon="clock-outline" compact style={{ marginRight: 8 }}>
-                      {item.durationMinutes}m
-                    </Chip>
                     <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
                       ${item.price}
                     </Text>

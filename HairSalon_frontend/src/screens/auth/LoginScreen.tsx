@@ -7,7 +7,6 @@ import {
   View,
 } from 'react-native';
 import {
-  Avatar,
   Button,
   HelperText,
   SegmentedButtons,
@@ -71,15 +70,10 @@ export const LoginScreen = ({ navigation }: any) => {
     >
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <Avatar.Icon
-            icon="scissors"
-            size={72}
-            style={{ backgroundColor: theme.colors.primaryContainer }}
-          />
           <Text variant="headlineMedium" numberOfLines={1} style={styles.title}>
             Welcome Back
           </Text>
-          <Text variant="bodyMedium" style={{ opacity: 0.7 }}>
+          <Text variant="bodyMedium" style={styles.subtitle}>
             Hair Salon Appointment & Management App
           </Text>
         </View>
@@ -190,11 +184,15 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   title: {
     fontWeight: 'bold',
-    marginTop: 12,
+    textAlign: 'center',
+  },
+  subtitle: {
+    opacity: 0.7,
+    marginTop: 6,
     textAlign: 'center',
   },
   roleContainer: {
