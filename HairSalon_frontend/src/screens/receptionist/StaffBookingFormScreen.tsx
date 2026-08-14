@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {
   Appbar,
+  Avatar,
   Button,
+  Card,
   Chip,
   HelperText,
-  Menu,
+  Icon,
   Snackbar,
   Text,
   TextInput,
@@ -18,11 +24,12 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { bookingService } from '../../services/bookingService';
 import { LoadingOverlay } from '../../components/LoadingOverlay';
+import { ServiceItem, Stylist } from '../../types/service';
 
 const staffBookingSchema = z.object({
   customerName: z.string().min(2, 'Customer name is required'),
   customerPhone: z.string().min(9, 'Phone number must be at least 9 digits'),
-  serviceId: z.string().min(1, 'Please select a service'),
+  serviceIds: z.array(z.string()).min(1, 'Please select at least one service'),
   stylistId: z.string().min(1, 'Please select a stylist'),
   bookingDate: z.string().min(1, 'Select a date'),
   timeSlot: z.string().min(1, 'Select a time slot'),
@@ -31,14 +38,11 @@ const staffBookingSchema = z.object({
 
 type StaffBookingValues = z.infer<typeof staffBookingSchema>;
 
-export const StaffBookingFormScreen = ({ navigation }: any) => {
+export const StaffBookingFormScreen = ({ navigation, route }: any) => {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [openDatePicker, setOpenDatePicker] = useState(false);
-
-  const [stylistMenuVisible, setStylistMenuVisible] = useState(false);
-  const [serviceMenuVisible, setServiceMenuVisible] = useState(false);
 
   const { data: services, isLoading: loadingServices } = useQuery({
     queryKey: ['services'],
@@ -124,7 +128,7 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
     defaultValues: {
       customerName: '',
       customerPhone: '',
-      serviceId: 'srv_1',
+      serviceIds: ['srv_1'],
       stylistId: 'usr_stylist_1',
       bookingDate: upcomingDates[0].value,
       timeSlot: '09:30 AM',
@@ -132,20 +136,51 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
     },
   });
 
-  const selectedServiceId = watch('serviceId');
+  const selectedServiceIds = watch('serviceIds');
   const selectedStylistId = watch('stylistId');
   const selectedBookingDate = watch('bookingDate');
   const selectedTimeSlot = watch('timeSlot');
 
-  const selectedService = (services || []).find((s) => s.id === selectedServiceId);
-  const selectedStylist = (stylists || []).find((s) => s.id === selectedStylistId);
+  useEffect(() => {
+    if (route?.params?.selectedServiceIds) {
+      setValue('serviceIds', route.params.selectedServiceIds);
+    }
+    if (route?.params?.selectedStylistId) {
+      setValue('stylistId', route.params.selectedStylistId);
+    }
+  }, [route?.params?.selectedServiceIds, route?.params?.selectedStylistId, setValue]);
+
+  const chosenServices: ServiceItem[] = (services || []).filter((s) =>
+    (selectedServiceIds || []).includes(s.id)
+  );
+
+  const chosenStylist: Stylist | undefined = (stylists || []).find((st) => st.id === selectedStylistId);
+
+  const totalPrice = chosenServices.reduce((sum, s) => sum + s.price, 0);
+  const totalDuration = chosenServices.reduce((sum, s) => sum + (s.durationMinutes || 30), 0);
+
+  const handleOpenServicesCatalog = () => {
+    navigation.navigate('BrowseServices', {
+      isSelectionMode: true,
+      selectedServiceIds,
+      returnScreen: 'StaffBookingForm',
+    });
+  };
+
+  const handleOpenStylistsCatalog = () => {
+    navigation.navigate('BrowseStylists', {
+      isSelectionMode: true,
+      selectedStylistId,
+      returnScreen: 'StaffBookingForm',
+    });
+  };
 
   const createMutation = useMutation({
     mutationFn: (values: StaffBookingValues) =>
       bookingService.createStaffBooking({
         customerName: values.customerName,
         customerPhone: values.customerPhone,
-        serviceIds: [values.serviceId],
+        serviceIds: values.serviceIds,
         stylistId: values.stylistId,
         bookingDate: values.bookingDate,
         timeSlot: values.timeSlot,
@@ -157,7 +192,7 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
       queryClient.invalidateQueries({ queryKey: ['staffCreatedBookings'] });
       setSnackbarVisible(true);
       setTimeout(() => {
-        navigation.goBack();
+        navigation.navigate('ReceptionistMainTabs', { screen: 'TrackingTab' });
       }, 1500);
     },
   });
@@ -184,12 +219,13 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
           </Chip>
         </View>
 
+        {/* Customer Name */}
         <Controller
           control={control}
           name="customerName"
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              label="Customer Full Name"
+              label="Customer Full Name *"
               mode="outlined"
               left={<TextInput.Icon icon="account" />}
               onBlur={onBlur}
@@ -204,12 +240,13 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
           <HelperText type="error">{errors.customerName.message}</HelperText>
         )}
 
+        {/* Customer Phone */}
         <Controller
           control={control}
           name="customerPhone"
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              label="Customer Phone Number"
+              label="Customer Phone Number *"
               mode="outlined"
               keyboardType="phone-pad"
               left={<TextInput.Icon icon="phone" />}
@@ -225,71 +262,115 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
           <HelperText type="error">{errors.customerPhone.message}</HelperText>
         )}
 
-        {/* Service Picker Dropdown */}
-        <Text variant="labelLarge" style={styles.label}>
-          Service Selection:
-        </Text>
-        <Menu
-          visible={serviceMenuVisible}
-          onDismiss={() => setServiceMenuVisible(false)}
-          anchor={
-            <Button
-              mode="outlined"
-              icon="content-cut"
-              onPress={() => setServiceMenuVisible(true)}
-              style={styles.pickerBtn}
-            >
-              {selectedService ? `${selectedService.title} ($${selectedService.price})` : 'Select Service'}
-            </Button>
-          }
-        >
-          {(services || []).map((srv) => (
-            <Menu.Item
-              key={srv.id}
-              title={`${srv.title} ($${srv.price})`}
-              onPress={() => {
-                setValue('serviceId', srv.id);
-                setServiceMenuVisible(false);
-              }}
-            />
-          ))}
-        </Menu>
+        {/* Multi-Service Selection Header & Summary Card */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 }}>
+          <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+            Selected Services:
+          </Text>
+          <Button
+            mode="text"
+            compact
+            icon="scissors-cutting"
+            onPress={handleOpenServicesCatalog}
+          >
+            {selectedServiceIds?.length ? 'Change Services' : '+ Select Services'}
+          </Button>
+        </View>
+        {errors.serviceIds && (
+          <HelperText type="error">{errors.serviceIds.message}</HelperText>
+        )}
 
-        {/* Stylist Picker Dropdown */}
-        <Text variant="labelLarge" style={styles.label}>
-          Assigned Stylist:
-        </Text>
-        <Menu
-          visible={stylistMenuVisible}
-          onDismiss={() => setStylistMenuVisible(false)}
-          anchor={
-            <Button
-              mode="outlined"
-              icon="account-badge"
-              onPress={() => setStylistMenuVisible(true)}
-              style={styles.pickerBtn}
-            >
-              {selectedStylist ? selectedStylist.fullName : 'Select Stylist'}
-            </Button>
-          }
-        >
-          {(stylists || []).map((st) => (
-            <Menu.Item
-              key={st.id}
-              title={st.fullName}
-              onPress={() => {
-                setValue('stylistId', st.id);
-                setStylistMenuVisible(false);
-              }}
-            />
-          ))}
-        </Menu>
+        {/* Selected Services Box */}
+        <Card mode="outlined" style={styles.summaryBox} onPress={handleOpenServicesCatalog}>
+          <Card.Content>
+            {chosenServices.length === 0 ? (
+              <Text variant="bodyMedium" style={{ opacity: 0.6, fontStyle: 'italic' }}>
+                No services selected. Click to browse full catalog.
+              </Text>
+            ) : (
+              <View>
+                {chosenServices.map((srv) => (
+                  <View key={srv.id} style={styles.serviceRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                      <Icon source="check-circle" size={16} color={theme.colors.primary} />
+                      <Text variant="bodyMedium" style={{ fontWeight: 'bold' }}>
+                        {srv.title}
+                      </Text>
+                    </View>
+                    <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                      ${srv.price} ({srv.durationMinutes}m)
+                    </Text>
+                  </View>
+                ))}
 
-        {/* Date Selection */}
-        <Text variant="labelLarge" style={styles.label}>
+                <View style={styles.totalRow}>
+                  <Text variant="labelSmall" style={{ opacity: 0.6 }}>
+                    Total ({chosenServices.length} items, {totalDuration} mins)
+                  </Text>
+                  <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+                    ${totalPrice}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </Card.Content>
+        </Card>
+
+        {/* Assigned Stylist Selection Header & Card */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 }}>
+          <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+            Assigned Stylist:
+          </Text>
+          <Button
+            mode="text"
+            compact
+            icon="account-star"
+            onPress={handleOpenStylistsCatalog}
+          >
+            {chosenStylist ? 'Change Stylist' : '+ Select Stylist'}
+          </Button>
+        </View>
+        {errors.stylistId && (
+          <HelperText type="error">{errors.stylistId.message}</HelperText>
+        )}
+
+        {/* Assigned Stylist Box */}
+        <Card mode="outlined" style={styles.summaryBox} onPress={handleOpenStylistsCatalog}>
+          <Card.Content>
+            {!chosenStylist ? (
+              <Text variant="bodyMedium" style={{ opacity: 0.6, fontStyle: 'italic' }}>
+                No stylist assigned. Click to select a master stylist.
+              </Text>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Avatar.Image size={50} source={{ uri: chosenStylist.avatarUrl }} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                    {chosenStylist.fullName}
+                  </Text>
+                  <Chip icon="content-cut" compact style={{ marginVertical: 2, alignSelf: 'flex-start' }}>
+                    {chosenStylist.specialty}
+                  </Chip>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon source="star" size={14} color="#FFB300" />
+                    <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
+                      {chosenStylist.rating} ({chosenStylist.experienceYears} Yrs Exp)
+                    </Text>
+                  </View>
+                </View>
+                <Chip icon="check" compact style={{ backgroundColor: theme.colors.primaryContainer }}>
+                  Assigned
+                </Chip>
+              </View>
+            )}
+          </Card.Content>
+        </Card>
+
+        {/* Appointment Date */}
+        <Text variant="titleMedium" style={styles.sectionTitle}>
           Appointment Date:
         </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
           {upcomingDates.map((d) => (
             <Chip
               key={d.value}
@@ -307,7 +388,7 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
             onPress={() => setOpenDatePicker(true)}
             style={{ marginRight: 8 }}
           >
-            Custom Date: {selectedBookingDate}
+            Custom Date
           </Chip>
         </ScrollView>
 
@@ -330,16 +411,17 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
         />
 
         {/* Time Slot Selection */}
-        <Text variant="labelLarge" style={styles.label}>
+        <Text variant="titleMedium" style={styles.sectionTitle}>
           Select Time Slot:
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
           {timeSlotsList.map((slot) => {
             const disabled = isSlotInPast(selectedBookingDate, slot);
+            const isSelected = selectedTimeSlot === slot;
             return (
               <Chip
                 key={slot}
-                mode={selectedTimeSlot === slot ? 'flat' : 'outlined'}
+                mode={isSelected ? 'flat' : 'outlined'}
                 selected={selectedTimeSlot === slot}
                 disabled={disabled}
                 onPress={() => !disabled && setValue('timeSlot', slot)}
@@ -355,6 +437,7 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
           })}
         </ScrollView>
 
+        {/* Receptionist Notes */}
         <Controller
           control={control}
           name="notes"
@@ -381,7 +464,7 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
           style={styles.submitBtn}
           contentStyle={{ paddingVertical: 6 }}
         >
-          Create Walk-in Booking
+          Create Walk-in Booking (${totalPrice})
         </Button>
       </ScrollView>
 
@@ -398,21 +481,40 @@ export const StaffBookingFormScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
+    padding: 16,
+    paddingBottom: 40,
   },
   badgeRow: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   input: {
     marginTop: 8,
   },
-  label: {
+  sectionTitle: {
+    fontWeight: 'bold',
     marginTop: 16,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  pickerBtn: {
-    borderRadius: 8,
-    alignItems: 'flex-start',
+  summaryBox: {
+    borderRadius: 12,
+    marginBottom: 8,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FBF8FD',
+  },
+  serviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+    marginTop: 8,
+    paddingTop: 8,
   },
   submitBtn: {
     marginTop: 24,

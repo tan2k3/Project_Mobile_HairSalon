@@ -86,4 +86,28 @@ export const MOCK_STYLISTS: Stylist[] = [
       'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400',
     ],
   },
+  {
+    id: 'usr_stylist_3',
+    fullName: 'Emma Clark',
+    specialty: 'Hair & Styling',
+    rating: 4.9,
+    experienceYears: 6,
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
+    bio: 'Creative hair designer specializing in classic haircuts, blow dry, and bridal styling.',
+    portfolioImages: [
+      'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=400',
+    ],
+  },
+  {
+    id: 'usr_stylist_4',
+    fullName: 'Olivia Brown',
+    specialty: 'Scalp & Care',
+    rating: 4.7,
+    experienceYears: 3,
+    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300',
+    bio: 'Focuses on deep scalp nourishment, organic hair spa treatments, and damaged hair restoration.',
+    portfolioImages: [
+      'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&q=80&w=400',
+    ],
+  },
 ];

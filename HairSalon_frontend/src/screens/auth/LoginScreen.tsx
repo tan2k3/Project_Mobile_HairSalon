@@ -76,7 +76,7 @@ export const LoginScreen = ({ navigation }: any) => {
             size={72}
             style={{ backgroundColor: theme.colors.primaryContainer }}
           />
-          <Text variant="headlineMedium" style={styles.title}>
+          <Text variant="headlineMedium" numberOfLines={1} style={styles.title}>
             Welcome Back
           </Text>
           <Text variant="bodyMedium" style={{ opacity: 0.7 }}>
@@ -195,6 +195,7 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: 'bold',
     marginTop: 12,
+    textAlign: 'center',
   },
   roleContainer: {
     marginBottom: 20,

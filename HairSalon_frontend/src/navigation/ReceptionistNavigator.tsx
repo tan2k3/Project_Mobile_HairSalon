@@ -9,6 +9,8 @@ import { StaffBookingFormScreen } from '../screens/receptionist/StaffBookingForm
 import { StaffCreatedBookingsScreen } from '../screens/receptionist/StaffCreatedBookingsScreen';
 import { ProcessPaymentScreen } from '../screens/receptionist/ProcessPaymentScreen';
 
+import { BrowseServicesScreen } from '../screens/customer/BrowseServicesScreen';
+import { BrowseStylistsScreen } from '../screens/customer/BrowseStylistsScreen';
 import { ViewProfileScreen } from '../screens/auth/ViewProfileScreen';
 import { UpdateProfileScreen } from '../screens/auth/UpdateProfileScreen';
 import { ChangePasswordScreen } from '../screens/auth/ChangePasswordScreen';
@@ -63,6 +65,8 @@ export const ReceptionistNavigator = () => {
       <Stack.Screen name="ReceptionistTodayBookings" component={ReceptionistTodayBookingsScreen} />
       <Stack.Screen name="StaffBookingForm" component={StaffBookingFormScreen} />
       <Stack.Screen name="StaffCreatedBookings" component={StaffCreatedBookingsScreen} />
+      <Stack.Screen name="BrowseServices" component={BrowseServicesScreen} />
+      <Stack.Screen name="BrowseStylists" component={BrowseStylistsScreen} />
       <Stack.Screen name="ProcessPayment" component={ProcessPaymentScreen} />
       <Stack.Screen name="ViewProfile" component={ViewProfileScreen} />
       <Stack.Screen name="UpdateProfile" component={UpdateProfileScreen} />

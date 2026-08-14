@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   Appbar,
   Button,
@@ -16,7 +16,6 @@ import { useAppSelector } from '../../store';
 export const CustomerHomeScreen = ({ navigation }: any) => {
   const theme = useTheme();
   const user = useAppSelector((state) => state.auth.user);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const { data: services } = useQuery({
     queryKey: ['services'],
@@ -27,18 +26,6 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
     queryKey: ['stylists'],
     queryFn: () => bookingService.getStylists(),
   });
-
-  const categories = [
-    { id: 'all', name: 'All Services' },
-    { id: 'cat_1', name: 'Haircuts' },
-    { id: 'cat_2', name: 'Styling & Perm' },
-    { id: 'cat_3', name: 'Coloring' },
-    { id: 'cat_4', name: 'Spa & Care' },
-  ];
-
-  const filteredServices = (services || []).filter(
-    (s) => selectedCategory === 'all' || s.categoryId === selectedCategory
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -80,58 +67,24 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
           </Card.Content>
         </Card>
 
-        {/* Quick Action Grid */}
-        <View style={styles.quickGrid}>
-          <Button
-            mode="outlined"
-            icon="scissors-cutting"
-            style={styles.quickBtn}
-            onPress={() => navigation.navigate('ServicesTab')}
+        {/* Popular Services Section Header with See All */}
+        <View style={styles.sectionHeaderRow}>
+          <Text variant="titleMedium" style={styles.sectionHeader}>
+            Popular Services
+          </Text>
+          <TouchableOpacity
+            style={styles.seeAllBtn}
+            onPress={() => navigation.navigate('BrowseServices')}
           >
-            Services
-          </Button>
-          <Button
-            mode="outlined"
-            icon="account-group"
-            style={styles.quickBtn}
-            onPress={() => navigation.navigate('StylistsTab')}
-          >
-            Stylists
-          </Button>
-          <Button
-            mode="outlined"
-            icon="information-outline"
-            style={styles.quickBtn}
-            onPress={() => navigation.navigate('AboutSalon')}
-          >
-            About Us
-          </Button>
+            <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+              See All
+            </Text>
+            <Icon source="arrow-right" size={16} color={theme.colors.primary} />
+          </TouchableOpacity>
         </View>
 
-        {/* Category Filter Horizontal Scroll */}
-        <Text variant="titleMedium" style={styles.sectionHeader}>
-          Popular Categories
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-          {categories.map((cat) => (
-            <Chip
-              key={cat.id}
-              mode={selectedCategory === cat.id ? 'flat' : 'outlined'}
-              selected={selectedCategory === cat.id}
-              onPress={() => setSelectedCategory(cat.id)}
-              style={styles.chip}
-            >
-              {cat.name}
-            </Chip>
-          ))}
-        </ScrollView>
-
-        {/* Featured Salon Services */}
-        <Text variant="titleMedium" style={[styles.sectionHeader, { marginTop: 16 }]}>
-          Featured Salon Services
-        </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.promoRow}>
-          {filteredServices.map((srv) => (
+          {(services || []).map((srv) => (
             <Card
               key={srv.id}
               mode="outlined"
@@ -151,10 +104,22 @@ export const CustomerHomeScreen = ({ navigation }: any) => {
           ))}
         </ScrollView>
 
-        {/* Top Master Stylists */}
-        <Text variant="titleMedium" style={[styles.sectionHeader, { marginTop: 16 }]}>
-          Top Master Stylists
-        </Text>
+        {/* Top Master Stylists Section Header with See All */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 16 }]}>
+          <Text variant="titleMedium" style={styles.sectionHeader}>
+            Top Master Stylists
+          </Text>
+          <TouchableOpacity
+            style={styles.seeAllBtn}
+            onPress={() => navigation.navigate('BrowseStylists')}
+          >
+            <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+              See All
+            </Text>
+            <Icon source="arrow-right" size={16} color={theme.colors.primary} />
+          </TouchableOpacity>
+        </View>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.promoRow}>
           {(stylists || []).map((st) => (
             <Card
@@ -220,26 +185,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
-  quickGrid: {
+  sectionHeaderRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 8,
-  },
-  quickBtn: {
-    flex: 1,
-    borderRadius: 8,
+    marginBottom: 10,
   },
   sectionHeader: {
     fontWeight: 'bold',
-    marginBottom: 8,
   },
-  chipRow: {
+  seeAllBtn: {
     flexDirection: 'row',
-    marginBottom: 12,
-  },
-  chip: {
-    marginRight: 8,
+    alignItems: 'center',
+    gap: 4,
   },
   promoRow: {
     flexDirection: 'row',

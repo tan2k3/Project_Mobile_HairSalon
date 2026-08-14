@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import {
   Appbar,
+  Button,
   Card,
   Chip,
-  IconButton,
   Searchbar,
+  Surface,
   Text,
   useTheme,
 } from 'react-native-paper';
@@ -15,10 +16,16 @@ import { LoadingOverlay } from '../../components/LoadingOverlay';
 import { EmptyState } from '../../components/EmptyState';
 import { ServiceItem } from '../../types/service';
 
-export const BrowseServicesScreen = ({ navigation }: any) => {
+export const BrowseServicesScreen = ({ navigation, route }: any) => {
   const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const isSelectionMode = route?.params?.isSelectionMode || false;
+  const initialSelectedIds: string[] = route?.params?.selectedServiceIds || ['srv_1'];
+  const returnScreen = route?.params?.returnScreen;
+
+  const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds);
 
   const { data: services, isLoading, refetch } = useQuery({
     queryKey: ['services'],
@@ -28,10 +35,24 @@ export const BrowseServicesScreen = ({ navigation }: any) => {
   const categories = [
     { id: 'all', name: 'All' },
     { id: 'cat_1', name: 'Haircuts' },
-    { id: 'cat_2', name: 'Styling' },
+    { id: 'cat_2', name: 'Styling & Perm' },
     { id: 'cat_3', name: 'Coloring' },
-    { id: 'cat_4', name: 'Treatment' },
+    { id: 'cat_4', name: 'Spa & Care' },
   ];
+
+  const toggleSelection = (serviceId: string) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(serviceId)) {
+        if (prev.length === 1) return prev; // Keep at least 1
+        return prev.filter((id) => id !== serviceId);
+      } else {
+        return [...prev, serviceId];
+      }
+    });
+  };
+
+  const chosenServices = (services || []).filter((s) => selectedIds.includes(s.id));
+  const totalPrice = chosenServices.reduce((sum, s) => sum + s.price, 0);
 
   const filteredServices = (services || []).filter((s) => {
     const matchesCategory =
@@ -40,6 +61,17 @@ export const BrowseServicesScreen = ({ navigation }: any) => {
     return matchesCategory && matchesSearch;
   });
 
+  const handleApplySelection = () => {
+    if (route?.params?.onSelectServices) {
+      route.params.onSelectServices(selectedIds);
+    }
+    if (returnScreen) {
+      navigation.navigate(returnScreen, { selectedServiceIds: selectedIds });
+    } else {
+      navigation.goBack();
+    }
+  };
+
   if (isLoading) {
     return <LoadingOverlay message="Loading service catalog..." />;
   }
@@ -47,10 +79,8 @@ export const BrowseServicesScreen = ({ navigation }: any) => {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header elevated>
-        {navigation.canGoBack() && (
-          <Appbar.BackAction onPress={() => navigation.goBack()} />
-        )}
-        <Appbar.Content title="Our Services" />
+        <Appbar.BackAction onPress={() => navigation.goBack()} />
+        <Appbar.Content title={isSelectionMode ? 'Select Services' : 'Our Services'} />
       </Appbar.Header>
 
       <View style={styles.headerControls}>
@@ -85,9 +115,10 @@ export const BrowseServicesScreen = ({ navigation }: any) => {
         keyExtractor={(item) => item.id}
         refreshing={isLoading}
         onRefresh={refetch}
-        contentContainerStyle={
-          filteredServices.length === 0 ? styles.emptyList : styles.list
-        }
+        contentContainerStyle={[
+          filteredServices.length === 0 ? styles.emptyList : styles.list,
+          isSelectionMode && { paddingBottom: 100 },
+        ]}
         ListEmptyComponent={
           <EmptyState
             icon="scissors-cutting"
@@ -95,42 +126,93 @@ export const BrowseServicesScreen = ({ navigation }: any) => {
             description="Try adjusting your search keywords or category filter."
           />
         }
-        renderItem={({ item }: { item: ServiceItem }) => (
-          <Card
-            mode="outlined"
-            style={styles.card}
-            onPress={() => navigation.navigate('ServiceDetail', { serviceId: item.id, service: item })}
-          >
-            <Card.Cover source={{ uri: item.imageUrl }} style={styles.cardCover} />
-            <Card.Content style={styles.cardContent}>
-              <View style={{ flex: 1 }}>
-                <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                  {item.title}
-                </Text>
-                <Text variant="bodySmall" numberOfLines={2} style={{ opacity: 0.7, marginVertical: 4 }}>
-                  {item.description}
-                </Text>
-
-                <View style={styles.metaRow}>
-                  <Chip icon="clock-outline" compact style={{ marginRight: 8 }}>
-                    {item.durationMinutes}m
-                  </Chip>
-                  <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                    ${item.price}
+        renderItem={({ item }: { item: ServiceItem }) => {
+          const isSelected = selectedIds.includes(item.id);
+          return (
+            <Card
+              mode="outlined"
+              style={[
+                styles.card,
+                isSelectionMode && isSelected && {
+                  borderColor: theme.colors.primary,
+                  borderWidth: 2,
+                  backgroundColor: theme.colors.primaryContainer + '15',
+                },
+              ]}
+              onPress={() => {
+                if (isSelectionMode) {
+                  toggleSelection(item.id);
+                } else {
+                  navigation.navigate('ServiceDetail', { serviceId: item.id, service: item });
+                }
+              }}
+            >
+              <Card.Cover source={{ uri: item.imageUrl }} style={styles.cardCover} />
+              <Card.Content style={styles.cardContent}>
+                <View style={{ flex: 1 }}>
+                  <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
+                    {item.title}
                   </Text>
-                </View>
-              </View>
+                  <Text variant="bodySmall" numberOfLines={2} style={{ opacity: 0.7, marginVertical: 4 }}>
+                    {item.description}
+                  </Text>
 
-              <IconButton
-                icon="plus-circle"
-                mode="contained-tonal"
-                size={28}
-                onPress={() => navigation.navigate('BookAppointment', { selectedServiceId: item.id })}
-              />
-            </Card.Content>
-          </Card>
-        )}
+                  <View style={styles.metaRow}>
+                    <Chip icon="clock-outline" compact style={{ marginRight: 8 }}>
+                      {item.durationMinutes}m
+                    </Chip>
+                    <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
+                      ${item.price}
+                    </Text>
+                  </View>
+                </View>
+
+                {isSelectionMode ? (
+                  <Button
+                    mode={isSelected ? 'contained' : 'outlined'}
+                    compact
+                    style={{ marginLeft: 8, borderRadius: 20, alignSelf: 'flex-end' }}
+                    onPress={() => toggleSelection(item.id)}
+                  >
+                    {isSelected ? 'Selected' : 'Select'}
+                  </Button>
+                ) : (
+                  <Button
+                    mode="contained"
+                    compact
+                    icon="calendar-check"
+                    onPress={() => navigation.navigate('BookAppointment', { selectedServiceId: item.id })}
+                    style={{ marginLeft: 8, borderRadius: 8, alignSelf: 'flex-end' }}
+                  >
+                    Book Now
+                  </Button>
+                )}
+              </Card.Content>
+            </Card>
+          );
+        }}
       />
+
+      {isSelectionMode && (
+        <Surface elevation={3} style={styles.bottomBar}>
+          <View>
+            <Text variant="labelSmall" style={{ opacity: 0.6 }}>
+              {selectedIds.length} Service{selectedIds.length > 1 ? 's' : ''} Selected
+            </Text>
+            <Text variant="titleLarge" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+              ${totalPrice}
+            </Text>
+          </View>
+          <Button
+            mode="contained"
+            icon="check-circle"
+            onPress={handleApplySelection}
+            style={{ borderRadius: 24, paddingHorizontal: 16 }}
+          >
+            CONFIRM SELECTION
+          </Button>
+        </Surface>
+      )}
     </View>
   );
 };
@@ -153,12 +235,13 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
-    gap: 16,
   },
   emptyList: {
     flexGrow: 1,
+    justifyContent: 'center',
   },
   card: {
+    marginBottom: 16,
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -174,5 +257,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 8,
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
   },
 });

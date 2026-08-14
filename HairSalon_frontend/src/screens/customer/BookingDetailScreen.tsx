@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import {
   Appbar,
+  Avatar,
   Button,
   Card,
-  Divider,
+  Chip,
+  Icon,
   List,
   Snackbar,
   Surface,
@@ -62,99 +64,137 @@ export const BookingDetailScreen = ({ navigation, route }: any) => {
     booking.status === BookingStatus.PENDING ||
     booking.status === BookingStatus.CONFIRMED;
 
+  const serviceTitle = booking.services.map((s) => s.title).join(', ');
+  const totalDuration = booking.services.reduce((acc, s) => acc + (s.durationMinutes || 30), 0);
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Appbar.Header elevated>
         <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title={`Booking #${booking.bookingCode}`} />
+        <Appbar.Content title="Appointment Details" />
+        <Appbar.Action icon="dots-horizontal" onPress={() => { }} />
       </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Banner Card */}
-        <Surface
-          style={[styles.banner, { backgroundColor: statusColor + '20' }]}
-          elevation={1}
-        >
-          <Text variant="titleMedium" style={{ color: statusColor, fontWeight: 'bold' }}>
-            STATUS: {BOOKING_STATUS_LABELS[booking.status].toUpperCase()}
-          </Text>
-          <Text variant="bodySmall" style={{ opacity: 0.8, marginTop: 4 }}>
-            Appointment Code: {booking.bookingCode}
-          </Text>
-        </Surface>
+        {/* Service Hero & Stylist Profile Header Card */}
+        <Card mode="outlined" style={styles.heroCard}>
+          <View style={styles.coverContainer}>
+            <Card.Cover
+              source={{
+                uri:
+                  booking.services[0]?.imageUrl ||
+                  'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=800',
+              }}
+              style={styles.heroCover}
+            />
+            <Chip
+              compact
+              style={[styles.statusBadge, { backgroundColor: statusColor }]}
+              textStyle={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 12 }}
+            >
+              {BOOKING_STATUS_LABELS[booking.status]}
+            </Chip>
+          </View>
 
-        {/* Appointment Details */}
-        <Card mode="outlined" style={styles.card}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionHeader}>
-              Appointment Information
-            </Text>
-            <List.Item
-              title="Customer Name"
-              description={booking.customerName}
-              left={(p) => <List.Icon {...p} icon="account" />}
+          <Card.Content style={styles.stylistHeaderRow}>
+            <Avatar.Image
+              size={64}
+              source={{
+                uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
+              }}
             />
-            <List.Item
-              title="Assigned Stylist"
-              description={booking.stylistName}
-              left={(p) => <List.Icon {...p} icon="account-badge-outline" />}
-            />
-            <List.Item
-              title="Scheduled Date & Time"
-              description={`${booking.bookingDate} at ${booking.timeSlot}`}
-              left={(p) => <List.Icon {...p} icon="calendar-clock" />}
-            />
-            {booking.notes ? (
-              <List.Item
-                title="Customer Notes"
-                description={booking.notes}
-                left={(p) => <List.Icon {...p} icon="note-text-outline" />}
-              />
-            ) : null}
+            <View style={styles.stylistInfoCol}>
+              <Text variant="titleMedium" numberOfLines={1} style={{ fontWeight: 'bold' }}>
+                {serviceTitle}
+              </Text>
+              <Text variant="bodySmall" style={{ opacity: 0.7, marginVertical: 2 }}>
+                with {booking.stylistName}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon source="star" size={14} color="#FFB300" />
+                <Text variant="bodySmall" style={{ color: '#FFB300', fontWeight: 'bold' }}>
+                  4.9
+                </Text>
+              </View>
+            </View>
           </Card.Content>
         </Card>
 
-        {/* Itemized Services Breakdown */}
+        {/* Appointment Details List Card */}
+        <Card mode="outlined" style={styles.card}>
+          <Card.Content style={{ paddingVertical: 8 }}>
+            <List.Item
+              title="Date"
+              description={booking.bookingDate}
+              titleStyle={{ fontSize: 12, opacity: 0.6 }}
+              descriptionStyle={{ fontSize: 15, fontWeight: 'bold', color: theme.colors.onSurface }}
+              left={() => (
+                <View style={styles.iconCircle}>
+                  <Icon source="calendar-month-outline" size={20} color={theme.colors.primary} />
+                </View>
+              )}
+            />
+            <List.Item
+              title="Time"
+              description={`${booking.timeSlot} (${totalDuration} mins)`}
+              titleStyle={{ fontSize: 12, opacity: 0.6 }}
+              descriptionStyle={{ fontSize: 15, fontWeight: 'bold', color: theme.colors.onSurface }}
+              left={() => (
+                <View style={styles.iconCircle}>
+                  <Icon source="clock-outline" size={20} color={theme.colors.primary} />
+                </View>
+              )}
+            />
+            <List.Item
+              title="Price"
+              description={`$${booking.totalAmount}`}
+              titleStyle={{ fontSize: 12, opacity: 0.6 }}
+              descriptionStyle={{ fontSize: 15, fontWeight: 'bold', color: theme.colors.primary }}
+              left={() => (
+                <View style={styles.iconCircle}>
+                  <Icon source="currency-usd" size={20} color={theme.colors.primary} />
+                </View>
+              )}
+            />
+            <List.Item
+              title="Payment Method"
+              description="Cash on Checkout"
+              titleStyle={{ fontSize: 12, opacity: 0.6 }}
+              descriptionStyle={{ fontSize: 15, fontWeight: 'bold', color: theme.colors.onSurface }}
+              left={() => (
+                <View style={styles.iconCircle}>
+                  <Icon source="cash" size={20} color={theme.colors.primary} />
+                </View>
+              )}
+            />
+          </Card.Content>
+        </Card>
+
+        {/* Notes Section Card */}
         <Card mode="outlined" style={styles.card}>
           <Card.Content>
-            <Text variant="titleMedium" style={styles.sectionHeader}>
-              Itemized Service List
+            <Text variant="titleSmall" style={{ fontWeight: 'bold', marginBottom: 4 }}>
+              Notes
             </Text>
-            {booking.services.map((srv, idx) => (
-              <List.Item
-                key={idx}
-                title={srv.title}
-                description={`${srv.durationMinutes || 30} mins`}
-                right={() => (
-                  <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                    ${srv.price}
-                  </Text>
-                )}
-              />
-            ))}
-            <Divider style={{ marginVertical: 12 }} />
-            <View style={styles.totalRow}>
-              <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                Final Total:
+            <Text variant="bodyMedium" style={{ opacity: 0.75, lineHeight: 20 }}>
+              Please arrive 10 minutes early for your appointment. Let us know if you need to reschedule.
+            </Text>
+            {booking.notes ? (
+              <Text variant="bodySmall" style={{ marginTop: 8, fontStyle: 'italic', color: theme.colors.primary }}>
+                Note: {booking.notes}
               </Text>
-              <Text
-                variant="headlineSmall"
-                style={{ color: theme.colors.primary, fontWeight: 'bold' }}
-              >
-                ${booking.totalAmount}
-              </Text>
-            </View>
+            ) : null}
           </Card.Content>
         </Card>
       </ScrollView>
 
-      {/* Contextual Bottom Actions */}
+      {/* Bottom Actions Bar */}
       {canModify && (
-        <Surface elevation={2} style={styles.bottomBar}>
+        <Surface elevation={3} style={styles.bottomBar}>
           <Button
             mode="contained-tonal"
             icon="calendar-sync"
-            style={{ flex: 1 }}
+            style={{ flex: 1, borderRadius: 24 }}
             onPress={() => navigation.navigate('BookAppointment')}
           >
             Reschedule
@@ -162,13 +202,13 @@ export const BookingDetailScreen = ({ navigation, route }: any) => {
           <Button
             mode="contained"
             buttonColor={theme.colors.error}
-            icon="close-circle"
-            style={{ flex: 1 }}
+            icon="trash-can-outline"
+            style={{ flex: 1, borderRadius: 24 }}
             loading={cancelMutation.isPending}
             disabled={cancelMutation.isPending}
             onPress={() => cancelMutation.mutate()}
           >
-            Cancel
+            Cancel Appointment
           </Button>
         </Surface>
       )}
@@ -187,26 +227,46 @@ export const BookingDetailScreen = ({ navigation, route }: any) => {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    paddingBottom: 90,
+    paddingBottom: 100,
   },
-  banner: {
-    padding: 16,
-    borderRadius: 12,
+  heroCard: {
+    borderRadius: 20,
     marginBottom: 16,
+    overflow: 'hidden',
+  },
+  coverContainer: {
+    position: 'relative',
+  },
+  heroCover: {
+    height: 180,
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    borderRadius: 12,
+  },
+  stylistHeaderRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
+  },
+  stylistInfoCol: {
+    flex: 1,
+    marginLeft: 12,
   },
   card: {
     borderRadius: 16,
     marginBottom: 16,
   },
-  sectionHeader: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3EDF7',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   bottomBar: {
     position: 'absolute',
@@ -216,5 +276,8 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
 });
